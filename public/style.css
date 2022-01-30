@@ -1,0 +1,29 @@
+body {
+    margin: 0px auto;
+    max-width: 1200px;
+    padding-top: 20px;
+}
+
+button {
+    padding: 8px;
+    width: 150px;
+}
+
+.start500 {
+    position: absolute;
+    left: 500px;
+}
+
+.inputContainer {
+    padding-bottom: 8px;
+}
+
+.inputContainer input {
+    position: absolute;
+    left: 250px;
+}
+
+.inputContainer a {
+    position: absolute;
+    left: 450px;
+}

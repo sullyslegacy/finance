@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Finance</title>
+        <link rel="stylesheet" href="style.css" />
+        <script src="js/main.js"></script>
+        <style>
+            .spacer {
+                padding-left: 75px;
+            }
+        </style>
+        <script>
+            const updateValue = () => {
+                const moneyPerHour = Number(get('moneyPerHour').value);
+                get('value35').innerHTML = boldNumber(moneyPerHour * 1820);
+                get('value40').innerHTML = boldNumber(moneyPerHour * 2080);
+            };
+        </script>
+    </head>
+    <body>
+        <div class="inputContainer">
+            Amount
+            <input id="moneyPerHour" type="number" placeholder="moneyPerHour" value="25" onchange="updateValue()" />
+        </div>
+
+        35 Hour Work Week
+        <span class="spacer">1820 * {Money Per Hour}</span>
+        <span id="value35" class="spacer"><b>45,500</b></span>
+        <br/>
+
+        40 Hour Work Week
+        <span class="spacer">2080 * {Money Per Hour}</span>
+        <span id="value40" class="spacer"><b>52,000</b></span>
+    </body>
+</html>

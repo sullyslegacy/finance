@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Finance</title>
+        <script>
+            const get = (id) => document.getElementById(id);
+
+            const calculateMonthlyInterestRate = () => {
+                const result = [];
+                const apy = parseFloat(get('apy').value) / 100;
+                const helper = Math.pow(apy + 1, 1/12);
+                const monthlyApy = (helper - 1) * 100;
+                result.push(`Monthly Interest ${monthlyApy.toPrecision(4)}`);
+
+                const money = get('money').value;
+                const monthlyValue = money * (monthlyApy / 100);
+                const yearlyValue = money * apy;
+                result.push(`Monthly Value ${monthlyValue.toPrecision(4)}`);
+                result.push(`Yearly Value ${yearlyValue.toPrecision(2)}`);
+                get('apyResults').innerHTML = result.join('<br />');
+            }
+        </script>
+        <link rel="stylesheet" href="style.css" />
+    </head>
+    <body>
+        <div class="apyContainer">
+            <div class="inputContainer">
+                APY Interest
+                <input id="apy" type="number" placeholder="0.5" value="0.5" />
+                <span class="start500">(1.00 would be 1%, 0.50 would be half a percent)</span>    
+            </div>
+
+            <div class="inputContainer">
+                Money
+                <input id="money" type="number" placeholder="1000" value="1000" />    
+            </div>
+
+            <button onclick="calculateMonthlyInterestRate()">Calculate Monthly Interest</button>
+            <br /><br />
+
+            <div id="apyResults"></div>
+            <br />
+        </div>
+    </body>
+</html>

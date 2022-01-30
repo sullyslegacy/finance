@@ -1,0 +1,46 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>Compound</title>
+	<script src="js/main.js"></script>
+	<script src="js/compound.js"></script>
+	<link rel="stylesheet" href="style.css" />
+	<style>
+		th {
+			text-align: left;
+    		width: 120px;
+		}
+	</style>
+</head>
+<body onload="createTableInterestOutput()">
+	<div class="inputContainer">
+		Amount
+		<input id="startingAmount" placeholder="startingAmount" value="10000"/>
+	</div>
+
+	<div class="inputContainer">
+		Annual Deposited Amount
+		<input id="amountDeposited" placeholder="amountDeposited" value="0"/>	
+	</div>
+
+	<div class="inputContainer">
+		Years
+		<input id="years" placeholder="years" value = "10"/>
+	</div>
+
+	<div class="inputContainer">
+		Interest
+		<input id="interestRate" placeholder="interestRate" value="1.08"/>	
+	</div>
+
+	<button onclick="calculateAmount()">Calculate</button><br/>
+	
+	<br />
+	<div id="output"></div>
+
+	<br />
+	<div id="tableOutput">
+	</div>
+	
+</body>
+</html>

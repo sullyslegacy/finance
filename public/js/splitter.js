@@ -6,7 +6,7 @@ const fillIn600 = () => {
 
 const fillIn650 = () => {
     get('housePrice').value = 650000;
-    get('houseAppreciationPrice').value = 705000;
+    get('houseAppreciationPrice').value = 715000;
     get('monthlyMortgage').value = 2750;
 }
 
