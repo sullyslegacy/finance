@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Finance</title>
+        <script src="main.js"></script>
+        <script src="splitter.js"></script>
+        <style>
+            body {
+                margin: 0px auto;
+                max-width: 1200px;
+                padding-top: 20px;
+            }
+
+            .inputContainer {
+                padding-bottom: 8px;
+            }
+
+            .inputContainer input {
+                position: absolute;
+                left: 250px;
+            }
+
+            .inputContainer a {
+                position: absolute;
+                left: 450px;
+            }
+
+            button {
+                padding: 8px;
+                width: 150px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="inputContainer">
+            House Price
+            <input id="housePrice" type="number" placeholder="500000" value="500000" />
+            <br />
+        </div>
+
+        <div class="inputContainer">
+            House Appreciation Price
+            <input id="houseAppreciationPrice" type="number" placeholder="550000" value="550000" />
+            <br />
+        </div>
+
+        <div class="inputContainer">
+            Down Payment Percent
+            <input id="downPaymentRate" type="number" placeholder="20" value="20" />
+            <br />
+        </div>
+
+        <div class="inputContainer">
+            Monthly Mortgage
+            <input id="monthlyMortgage" type="number" placeholder="2250" value="2250" />
+            <a href="https://www.mortgagecalculator.org/">Mortgage Calc</a>
+            <br />
+        </div>
+
+        <div class="inputContainer">            
+            Mortgage Duration (Years)
+            <input id="mortgageDuration" type="number" placeholder="30" value="30" />
+            <br />
+        </div>
+
+        <div class="inputContainer">
+            Split (80 / 20 split put 80)
+            <input id="primarySplit" type="number" placeholder="80" value="80" />
+            <br />
+        </div>
+
+        <div class="inputContainer">
+            Months investing in house
+            <input id="monthsInvested" type="number" placeholder="24" value="24" />
+            <br />
+        </div>
+
+        <button onclick="calculateHouseSplit()">Calculate</button>
+        <button onclick="fillIn600()">600K</button>
+        <button onclick="fillIn650()">650K</button>
+        <button onclick="fillIn700()">700K</button>
+        <br /><br />
+
+        <span id="houseSplitResults"></span>
+
+        <br /><br />
+        ** Some of the math with parseFloat may not be 100% accurate
+
+    </body>
+</html>
