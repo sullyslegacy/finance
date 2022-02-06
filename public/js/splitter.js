@@ -34,6 +34,7 @@ const calculateHouseSplit = () => {
 
     results.push('Down payment of ' + formatNumber(downPaymentAmount));
     results.push('Loan Amount of ' + formatNumber(loanAmount));
+    results.push('Total Loan Amount ' + formatNumber(monthlyMortgage * mortgageDuration * 12));
     results.push('Home appreciates ' + appreciationRate);
     results.push('');
 
@@ -73,7 +74,7 @@ const calculateHouseSplit = () => {
     results.push('Primary Total Value ' + boldNumber(primaryTotalValue));
     results.push('');
 
-    results.push(`Secondary pays a total of (D.P. ${formatNumber(secondaryTotalPayments)} + Loan ${formatNumber(secondaryMortgagePayments)}) ${boldNumber(secondaryTotalPayments)}`);
+    results.push(`Secondary pays a total of (D.P. ${formatNumber(secondaryDownPayment)} + Loan ${formatNumber(secondaryMortgagePayments)}) ${boldNumber(secondaryTotalPayments)}`);
     results.push('Secondary Loan Investment ' + formatNumber(secondaryLoanValue) + ' apprecaites to ' + formatNumber(secondaryLoanAppreciationValue) + ' but paid ' + formatNumber(secondaryMortgagePayments));
     results.push('Secondary Total Value ' + boldNumber(secondaryTotalValue));
     results.push('');
