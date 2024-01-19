@@ -1,0 +1,63 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+	<title>Home Interest Calculator</title>
+	<script src="js/main.js"></script>
+	<script src="js/monthlyPayments.js"></script>
+	<link rel="stylesheet" href="style.css" />
+	<style>
+		.inputContainer input {
+			left: 350px;
+		}
+
+        th, td {
+            text-align: left;
+            width: 200px;
+        }
+	</style>
+</head>
+<body>
+	<div class="inputContainer">
+		Amount Remaining
+		<input id="amountRemaining" placeholder="Amount Remaining" value="200000" />
+	</div>
+
+    <div class="inputContainer">
+		Amount To Pay
+		<input id="amountToPay" placeholder="amountToPay" value="50000" />
+	</div>
+
+    <div class="inputContainer">
+		Monthly Payment
+		<input id="monthlyPayment" placeholder="monthlyPayment" value="2000" />
+	</div>
+
+	<div class="inputContainer">
+		Mortgage Interest Rate
+		<input
+            id="mortgageInterestRate"
+            placeholder="Mortgage Interest Rate"
+            step=".0025"
+            type="number"
+            value="1.085"
+        />
+	</div>
+
+	<div class="inputContainer">
+		Savings Interest Rate
+		<input
+            id="savingsInterestRate"
+            placeholder="Savings Interest Rate"
+            step=".0025"
+            type="number"
+            value="1.08"
+        />
+	</div>
+
+	<button onclick="calculateAmount()">Calculate</button><br/>
+	
+	<br />
+	<div id="output"></div>
+	https://www.thecalculatorsite.com/finance/calculators/loan-payoff-calculator.php
+</body>
+</html>
