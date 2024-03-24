@@ -18,35 +18,44 @@ const formatAmount = (amount) => {
 }
 
 const createHighlights = (payDownItems, noPayDownItems) => {
-    const lastPayDown = payDownItems[payDownItems.length - 1];
-    const lastNoPayDown = noPayDownItems[noPayDownItems.length - 1];
-    let output = `<div>In ${payDownItems.length} months you paid ${formatAmount(lastPayDown.totalAmountPaid)} with ${formatAmount(lastPayDown.totalInterestPaid)} interest</div>`;
-    output += `<div>You could've saved ${formatAmount(lastPayDown.totalSavings)} in ${payDownItems.length} months</div>`;
-    output += `<br /><div>If you didn't payoff anything</div>`;
-    output += `<div>In ${noPayDownItems.length} months you paid ${formatAmount(lastNoPayDown.totalAmountPaid)} with ${formatAmount(lastNoPayDown.totalInterestPaid)} interest</div>`;
+    const lastPayDown = payDownItems.paidOffMonthRow;
+    const longerNoPayDown = payDownItems.monthlySavings[noPayDownItems.paidOffMonthIndex];
+
+    const lastNoPayDown = noPayDownItems.paidOffMonthRow
+    const midwayNoPayDown = noPayDownItems.monthlySavings[payDownItems.paidOffMonthIndex];
+
+    let output = `<div>In ${payDownItems.paidOffMonthIndex} months you paid ${formatAmount(lastPayDown.totalAmountPaid)} with ${formatAmount(lastPayDown.totalInterestPaid)} interest</div>`;
+    output += `<div>After paying off the loan you could've saved ${formatAmount(longerNoPayDown.totalSavings)} in ${noPayDownItems.paidOffMonthIndex} months</div>`;
+
+    output += `<br /><div>If you didn't payoff anything it would take ${noPayDownItems.paidOffMonthIndex} months to pay off the loan</div>`;
+    output += `<div>You would've paid ${formatAmount(lastNoPayDown.totalAmountPaid)} with ${formatAmount(lastNoPayDown.totalInterestPaid)} interest</div>`;
+    output += `<div>You could've saved ${formatAmount(midwayNoPayDown.totalSavings)} in ${payDownItems.paidOffMonthIndex} months</div>`;
+    output += `<div>You could've saved ${formatAmount(lastNoPayDown.totalSavings)} in ${noPayDownItems.paidOffMonthIndex} months</div>`;
     
-    
-    const savingsAmount = (lastNoPayDown.totalAmountPaid - lastPayDown.totalAmountPaid) - lastPayDown.totalSavings;
-    output += `<br /><div>Paying off this amount you netted ${formatAmount(savingsAmount)}</div>`;
+
+    // const savingsAmount = (lastNoPayDown.totalAmountPaid - lastPayDown.totalAmountPaid) - lastPayDown.totalSavings;
+    // output += `<br /><div>Paying off this amount you netted ${formatAmount(savingsAmount)}</div>`;
     return output;
 };
 
 const createMonthlyRates = ({
     amountRemaining,
-    amountToPayOrSave,
+    amountToPayOff,
     monthlyPayment,
     monthlyMortgageRate,
+    amountToSave,
     monthlySavingsInterestRate,
+    totalMonths,
 }) => {
     const outputs = [];
-    let totalAmountPaid = 0;
+    let totalAmountPaid = amountToPayOff;
     let totalInterestPaid = 0;
-    let totalSavings = amountToPayOrSave;
+    let totalSavings = amountToSave;
+    let paidOffMonthIndex = -1;
 
     let monthIndex = 0;
-    while (amountRemaining > 0 && monthIndex < 360) {
+    while (monthIndex < totalMonths) {
         monthIndex++;
-
 
         // Add interest for the month
         const interestForMonth = (amountRemaining * monthlyMortgageRate) - amountRemaining;
@@ -57,17 +66,28 @@ const createMonthlyRates = ({
         // Pay off an amount
         amountRemaining -= monthlyPayment;
         if (amountRemaining <= 0) {
-            // Amount remaining is the extra we paid off so substract that (It's a negative #)
-            totalAmountPaid += monthlyPayment + amountRemaining;
+            if (paidOffMonthIndex > 0) {
+                totalSavings += monthlyPayment;
+            } else {
+                paidOffMonthIndex = monthIndex;
+                // Amount remaining is now a negative number and and overpayment amount
+                const overpaymentAmount = Math.abs(amountRemaining);
+                totalAmountPaid += monthlyPayment - overpaymentAmount; 
+                totalSavings += overpaymentAmount;                
+            }
+
+            // Set amount remaining after setting overpayment amount
+            amountRemaining = 0;
+
             outputs.push({
-                amountRemaining: 0,
+                amountRemaining,
                 interestForMonth,
                 monthIndex,
                 totalAmountPaid,
                 totalInterestPaid,
                 totalSavings,
             });
-            break;
+            continue;
         }
         
         
@@ -84,38 +104,50 @@ const createMonthlyRates = ({
             totalSavings,
         });
     }
-    return outputs;
+
+    const paidOffMonthRow = outputs[paidOffMonthIndex - 1];
+    return {
+        monthlySavings: outputs,
+        paidOffMonthIndex,
+        paidOffMonthRow,
+    };
 };
 
 const calculateAmount = () => {
     get('output').innerHTML = "";
 
 	let amountRemaining = getVal('amountRemaining');
-    const amountToPayOrSave = getVal('amountToPayOrSave');
+    const amountToPayOff = getVal('amountToPayOff');
     const monthlyPayment = getVal('monthlyPayment');
+    const totalMonths = getVal('totalMonths');
     
     const mortgageInterestRate = getVal('mortgageInterestRate');
 	const monthlyMortgageRate = getMonthlyInterestRate(mortgageInterestRate);
     console.log('monthlyMortgageRate', monthlyMortgageRate);
 
+    const amountToSave = getVal('amountToSave');
     const savingsInterestRate = getVal('savingsInterestRate');
 	const monthlySavingsInterestRate = getMonthlyInterestRate(savingsInterestRate);
     console.log('monthlySavingsInterestRate', monthlySavingsInterestRate);
 
     const payingOffOutputs = createMonthlyRates({
-        amountRemaining: amountRemaining - amountToPayOrSave,
-        amountToPayOrSave,
+        amountRemaining: amountRemaining - amountToPayOff,
+        amountToPayOff,
         monthlyPayment,
         monthlyMortgageRate,
+        amountToSave: amountToSave,
         monthlySavingsInterestRate,
+        totalMonths,
     });
 
     const fullSavingOutputs = createMonthlyRates({
         amountRemaining,
-        amountToPayOrSave: 0,
+        amountToPayOff: 0,
         monthlyPayment,
         monthlyMortgageRate,
+        amountToSave: amountToSave + amountToPayOff,
         monthlySavingsInterestRate,
+        totalMonths,
     });
     console.log('fullSavingOutputs', fullSavingOutputs);
 
@@ -126,24 +158,48 @@ const calculateAmount = () => {
     table += '<th>Month</th>';
     table += '<th>Monthly Interest</th>';
     table += '<th>Total Interest</th>';
-    table += '<th>Total Amount Paid</th>';
-    table += '<th>Total Savings</th>';
+    table += '<th>Total Paid</th>';
     table += '<th>Amount Remaining</th>';
+    table += '<th>Total Savings</th>';
+    table += '<th></th>';
+    table += '<th>Monthly Interest</th>';
+    table += '<th>Total Interest</th>';
+    table += '<th>Total Paid</th>';
+    table += '<th>Amount Remaining</th>';
+    table += '<th>Total Savings</th>';
+    table += '<th></th>';
+    table += '<th>Net</th>';
     table += '</tr>';
-    payingOffOutputs.forEach((output) => {
-        const monthOutput = output.monthIndex % 12 === 0 ? 'Year ' + output.monthIndex / 12 : output.monthIndex;
+    for (let i = 0; i < totalMonths; i++) {
+        const paidOffItem = payingOffOutputs.monthlySavings[i];
+        const fullSaveItem = fullSavingOutputs.monthlySavings[i];
+
+        const paidOffNet = paidOffItem.totalSavings - (paidOffItem.totalAmountPaid + paidOffItem.amountRemaining);
+        const fullSaveNet = fullSaveItem.totalSavings - (fullSaveItem.totalAmountPaid + fullSaveItem.amountRemaining);
+
+        const createRowOutput = (item) => {
+            const net = item.totalSavings - (item.totalAmountPaid + item.amountRemaining);
+            return `
+                <td>${formatAmount(item.interestForMonth)}</td>
+                <td>${formatAmount(item.totalInterestPaid)}</td>
+                <td>${formatAmount(item.totalAmountPaid)}</td>
+                <td>${formatAmount(item.amountRemaining)}</td>
+                <td title='Net ${formatAmount(net)}'>${formatAmount(item.totalSavings)}</td>
+            `;
+        };
+
+        const monthOutput = i % 12 === 0 ? 'Year ' + i / 12 : i;
         table += `
             <tr>
                 <td>${monthOutput}</td>
-                <td>${formatAmount(output.interestForMonth)}</td>
-                <td>${formatAmount(output.totalInterestPaid)}</td>
-                <td>${formatAmount(output.totalAmountPaid)}</td>
-                <td>${formatAmount(output.totalSavings)}</td>
-                <td>${formatAmount(output.amountRemaining)}</td>
+                ${createRowOutput(paidOffItem)}
+                <td></td>
+                ${createRowOutput(fullSaveItem)}
+                <td></td>
+                <td>${formatAmount(paidOffNet - fullSaveNet)}</td>
             </tr>
         `;
-    });
-
+    }
     table += `</table>`;
     addOutput(createHighlights(payingOffOutputs, fullSavingOutputs));
     addOutput('<br />');

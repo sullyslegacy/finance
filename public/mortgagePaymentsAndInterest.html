@@ -14,6 +14,11 @@
             text-align: left;
             width: 200px;
         }
+
+		body {
+			max-width: 1600px;
+			margin: 20px;
+		}
 	</style>
 </head>
 <body>
@@ -23,8 +28,8 @@
 	</div>
 
     <div class="inputContainer">
-		Amount To Pay
-		<input id="amountToPayOrSave" placeholder="Amount to pay off" value="50000" />
+		Amount To Pay Off
+		<input id="amountToPayOff" placeholder="Amount to pay off" value="50000" />
 	</div>
 
     <div class="inputContainer">
@@ -44,6 +49,11 @@
 	</div>
 
 	<div class="inputContainer">
+		Amount To Save
+		<input id="amountToSave" placeholder="Amount to save" value="0" />
+	</div>
+
+	<div class="inputContainer">
 		Savings Interest Rate
 		<input
             id="savingsInterestRate"
@@ -54,6 +64,17 @@
         />
 	</div>
 
+	<div class="inputContainer">
+		Total Months
+		<input
+            id="totalMonths"
+            placeholder="Total Months"
+            step="1"
+            type="number"
+            value="240"
+        />
+	</div>
+
 	<button onclick="calculateAmount()">Calculate</button><br/>
 	
 	<br />
@@ -61,11 +82,6 @@
 
 
 	<br />
-	TODO
-	Show total Paid, and total interest paid not paying off
-	However show total in savings made
-
-	Show total Paid, and total interest paid having paid off
 
 	<br />
 	<br />
