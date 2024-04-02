@@ -17,6 +17,12 @@ const formatAmount = (amount) => {
     return `${big}.${small.substring(0, 2)}`;
 }
 
+const getMonthsAndYear = (months) => {
+    let years = Math.floor(months / 12);
+    let m = months % 12;
+    return `${years} years, ${m} months`;
+};
+
 const createHighlights = (payDownItems, noPayDownItems) => {
     const lastPayDown = payDownItems.paidOffMonthRow;
     const longerNoPayDown = payDownItems.monthlySavings[noPayDownItems.paidOffMonthIndex];
@@ -24,10 +30,10 @@ const createHighlights = (payDownItems, noPayDownItems) => {
     const lastNoPayDown = noPayDownItems.paidOffMonthRow
     const midwayNoPayDown = noPayDownItems.monthlySavings[payDownItems.paidOffMonthIndex];
 
-    let output = `<div>In ${payDownItems.paidOffMonthIndex} months you paid ${formatAmount(lastPayDown.totalAmountPaid)} with ${formatAmount(lastPayDown.totalInterestPaid)} interest</div>`;
+    let output = `<div>In ${getMonthsAndYear(payDownItems.paidOffMonthIndex)} months you paid ${formatAmount(lastPayDown.totalAmountPaid)} with ${formatAmount(lastPayDown.totalInterestPaid)} interest</div>`;
     output += `<div>After paying off the loan you could've saved ${formatAmount(longerNoPayDown.totalSavings)} in ${noPayDownItems.paidOffMonthIndex} months</div>`;
 
-    output += `<br /><div>If you didn't payoff anything it would take ${noPayDownItems.paidOffMonthIndex} months to pay off the loan</div>`;
+    output += `<br /><div>If you didn't payoff anything it would take ${getMonthsAndYear(noPayDownItems.paidOffMonthIndex)} months to pay off the loan</div>`;
     output += `<div>You would've paid ${formatAmount(lastNoPayDown.totalAmountPaid)} with ${formatAmount(lastNoPayDown.totalInterestPaid)} interest</div>`;
     output += `<div>You could've saved ${formatAmount(midwayNoPayDown.totalSavings)} in ${payDownItems.paidOffMonthIndex} months</div>`;
     output += `<div>You could've saved ${formatAmount(lastNoPayDown.totalSavings)} in ${noPayDownItems.paidOffMonthIndex} months</div>`;
