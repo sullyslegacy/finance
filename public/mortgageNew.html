@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Income Allocation Simulator</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 1100px; margin: auto; }
+    h1, h2 { margin-top: 30px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    label { display: flex; flex-direction: column; font-size: 14px; }
+    input { padding: 6px; font-size: 14px; }
+    .toggle-group { display: flex; gap: 4px; margin-bottom: 4px; }
+    .toggle-btn { padding: 4px 8px; font-size: 12px; border: 1px solid #ccc; background: #f9f9f9; cursor: pointer; }
+    .toggle-btn.active { background: #007bff; color: white; border-color: #007bff; }
+    .allocation-group { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 12px; border: 1px solid #e0e0e0; border-radius: 4px; margin-bottom: 12px; align-items: end; }
+    .allocation-item { display: flex; flex-direction: column; justify-content: flex-start; }
+    .allocation-item label { margin-bottom: 8px; }
+    .allocation-item label:last-child { margin-bottom: 0; }
+    .top-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: right; }
+    th { background: #f5f5f5; }
+    td:first-child, th:first-child { text-align: left; }
+    .note { margin-top: 10px; font-style: italic; }
+    .negative { color: #d9534f; font-weight: bold; }
+    [data-tooltip] { cursor: help; border-bottom: 1px dotted #666; position: relative; }
+    [data-tooltip]:hover::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 125%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      white-space: nowrap;
+      z-index: 1000;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    [data-tooltip]:hover::before {
+      content: '';
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #333;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Income Allocation Simulator</h1>
+
+<div class="top-inputs">
+  <label>
+    Monthly Income
+    <input id="income" type="number" value="10000" />
+  </label>
+
+  <label>
+    Total Years
+    <input id="totalYears" type="number" value="30" />
+  </label>
+
+  <label>
+    Years to Contribute
+    <input id="contributeYears" type="number" value="20" />
+  </label>
+
+  <label>
+    Monthly Bills
+    <input id="bills" type="number" value="3000" />
+  </label>
+
+  <label>
+    Bill Inflation %
+    <input id="billInflation" type="number" value="3" />
+  </label>
+
+  <label>
+    Income Inflation %
+    <input id="incomeInflation" type="number" value="2" />
+  </label>
+</div>
+
+<h2>Allocations</h2>
+
+<div class="allocation-group">
+  <div class="allocation-item">
+    <label><strong>Mortgage</strong></label>
+    <label>Current: $<input id="mortInitial" type="number" value="500000" placeholder="Starting balance"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn active" onclick="toggleMode('mort', '%')">%</button><button class="toggle-btn" onclick="toggleMode('mort', 'amt')">Amt</button></div><input id="mortPct" type="number" value="40" placeholder="% of income"><input id="mortAmt" type="number" value="60000" style="display:none;" placeholder="Annual"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Rate %<input id="mortRate" type="number" value="6.5"></label>
+  </div>
+</div>
+
+<div class="allocation-group">
+  <div class="allocation-item">
+    <label><strong>Bank</strong></label>
+    <label>Current: $<input id="bankInitial" type="number" value="100000" placeholder="Starting balance"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn active" onclick="toggleMode('bank', '%')">%</button><button class="toggle-btn" onclick="toggleMode('bank', 'amt')">Amt</button></div><input id="bankPct" type="number" value="30" placeholder="% of income"><input id="bankAmt" type="number" value="36000" style="display:none;" placeholder="Annual"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Rate %<input id="bankRate" type="number" value="3.5"></label>
+  </div>
+</div>
+
+<div class="allocation-group">
+  <div class="allocation-item">
+    <label><strong>Stock</strong></label>
+    <label>Current: $<input id="stockInitial" type="number" value="100000" placeholder="Starting balance"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn active" onclick="toggleMode('stock', '%')">%</button><button class="toggle-btn" onclick="toggleMode('stock', 'amt')">Amt</button></div><input id="stockPct" type="number" value="30" placeholder="% of income"><input id="stockAmt" type="number" value="36000" style="display:none;" placeholder="Annual"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Rate %<input id="stockRate" type="number" value="8.5"></label>
+  </div>
+</div>
+
+<div class="allocation-group">
+  <div class="allocation-item">
+    <label><strong>401K</strong></label>
+    <label>Current: $<input id="k401Initial" type="number" value="0" placeholder="Starting balance"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('k401', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('k401', 'amt')">Amt</button></div><input id="k401Pct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="k401Amt" type="number" value="23500" placeholder="Annual"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Rate %<input id="k401Rate" type="number" value="7.5"></label>
+  </div>
+</div>
+
+<div class="allocation-group">
+  <div class="allocation-item">
+    <label><strong>Roth</strong></label>
+    <label>Current: $<input id="rothInitial" type="number" value="0" placeholder="Starting balance"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('roth', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('roth', 'amt')">Amt</button></div><input id="rothPct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="rothAmt" type="number" value="7000" placeholder="Annual"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Rate %<input id="rothRate" type="number" value="7.5"></label>
+  </div>
+</div>
+
+<div class="allocation-group">
+  <div class="allocation-item">
+    <label><strong>Other</strong></label>
+    <label>Current: $<input id="otherInitial" type="number" value="0" placeholder="Starting balance"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn active" onclick="toggleMode('other', '%')">%</button><button class="toggle-btn" onclick="toggleMode('other', 'amt')">Amt</button></div><input id="otherPct" type="number" value="0" placeholder="% of income"><input id="otherAmt" type="number" value="0" style="display:none;" placeholder="Annual"></label>
+  </div>
+  <div class="allocation-item">
+    <label>Rate %<input id="otherRate" type="number" value="5"></label>
+  </div>
+</div>
+
+<button id="runBtn" style="margin-top:20px;padding:10px 16px;font-size:16px;cursor:pointer;">Run Simulation</button>
+
+<h2>Mortgage Payoff</h2>
+<p id="payoff"></p>
+
+<h2 id="breakdownTitle">30-Year Yearly Breakdown</h2>
+<table id="results">
+  <thead>
+    <tr>
+      <th>Year</th>
+      <th>Mortgage Balance</th>
+      <th>Bills</th>
+      <th>Bank</th>
+      <th>Stock</th>
+      <th>401K</th>
+      <th>Roth</th>
+      <th>Other</th>
+      <th>Total</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+  <tfoot></tfoot>
+</table>
+<p id="netWorth" style="margin-top:12px;font-weight:bold;"></p>
+
+<script>
+const allocationMode = {
+  mort: '%',
+  bank: '%',
+  stock: '%',
+  k401: 'amt',
+  roth: 'amt',
+  other: '%'
+};
+
+function toggleMode(category, mode) {
+  allocationMode[category] = mode;
+  const pctInput = document.getElementById(category + 'Pct');
+  const amtInput = document.getElementById(category + 'Amt');
+  const buttons = event.target.parentElement.querySelectorAll('.toggle-btn');
+  
+  buttons.forEach(btn => btn.classList.remove('active'));
+  event.target.classList.add('active');
+  
+  if (mode === '%') {
+    pctInput.style.display = '';
+    amtInput.style.display = 'none';
+  } else {
+    pctInput.style.display = 'none';
+    amtInput.style.display = '';
+  }
+  simulate();
+}
+
+function formatCurrency(num) {
+  return num.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+}
+function formatSignedCurrency(num) {
+  const formatted = Math.abs(num).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (num < 0) {
+    return `-$${formatted}`;
+  }
+  return `+$${formatted}`;
+}
+
+function formatSignedCurrencyHTML(num) {
+  const formatted = Math.abs(num).toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  if (num < 0) {
+    return `<span class="negative">-$${formatted}</span>`;
+  }
+  return `+$${formatted}`;
+}
+function monthlyRate(rate) {
+  return rate / 100 / 12;
+}
+
+function simulate() {
+  const totalYears = +totalYearsEl.value;
+  const MONTHS = totalYears * 12;
+  const contributeMonths = +contributeYearsEl.value * 12;
+  let income = +incomeEl.value;
+  let monthlyBills = +billsEl.value;
+  const billInflation = +billInflationEl.value / 100;
+  const incomeInflation = +incomeInflationEl.value / 100;
+
+  let mortPct = +mortPctEl.value;
+  const mortRate = +mortRateEl.value;
+  let mortBal = +mortInitialEl.value;
+
+  const bankPct = +bankPctEl.value;
+  const bankRate = +bankRateEl.value;
+  let bankBal = +bankInitialEl.value;
+
+  const stockPct = +stockPctEl.value;
+  const stockRate = +stockRateEl.value;
+  let stockBal = +stockInitialEl.value;
+
+  const k401Pct = +k401PctEl.value;
+  const k401Rate = +k401RateEl.value;
+  let k401Bal = +k401InitialEl.value;
+
+  const rothPct = +rothPctEl.value;
+  const rothRate = +rothRateEl.value;
+  let rothBal = +rothInitialEl.value;
+
+  let otherPct = +otherPctEl.value;
+  const otherRate = +otherRateEl.value;
+  let otherBal = +otherInitialEl.value;
+
+  let payoffMonth = null;
+  const rows = [];
+
+  let yearContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0 };
+  let yearInterest = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0 };
+
+  let totalContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0 };
+  let totalInterest = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0 };
+
+  for (let m = 1; m <= MONTHS; m++) {
+    const isContributing = m <= contributeMonths;
+    const mortPay = isContributing ? (allocationMode.mort === '%' ? income * mortPct / 100 : mortBal > 0 ? +mortAmtEl.value / 12 : 0) : 0;
+    const bankPay = isContributing ? (allocationMode.bank === '%' ? income * bankPct / 100 : +bankAmtEl.value / 12) : 0;
+    const stockPay = isContributing ? (allocationMode.stock === '%' ? income * stockPct / 100 : +stockAmtEl.value / 12) : 0;
+    const otherPay = isContributing ? (allocationMode.other === '%' ? income * otherPct / 100 : +otherAmtEl.value / 12) : 0;
+
+    if (mortBal > 0) {
+      const before = mortBal;
+      mortBal = mortBal * (1 + monthlyRate(mortRate));
+      const interest = mortBal - before;
+      mortBal -= mortPay;
+
+      yearContrib.mortgage += mortPay;
+      yearInterest.mortgage += interest;
+      totalContrib.mortgage += mortPay;
+      totalInterest.mortgage += interest;
+
+      if (mortBal <= 0 && payoffMonth === null) {
+        payoffMonth = m;
+        mortPct = 0;
+        otherPct += +mortPctEl.value;
+      }
+    }
+
+    {
+      const before = bankBal;
+      bankBal = bankBal * (1 + monthlyRate(bankRate));
+      const interest = bankBal - before;
+      bankBal += bankPay;
+      bankBal -= monthlyBills;
+      yearContrib.bank += bankPay;
+      yearContrib.bills += monthlyBills;
+      yearInterest.bank += interest;
+      totalContrib.bank += bankPay;
+      totalContrib.bills += monthlyBills;
+      totalInterest.bank += interest;
+    }
+
+    {
+      const before = stockBal;
+      stockBal = stockBal * (1 + monthlyRate(stockRate));
+      const interest = stockBal - before;
+      stockBal += stockPay;
+      yearContrib.stock += stockPay;
+      yearInterest.stock += interest;
+      totalContrib.stock += stockPay;
+      totalInterest.stock += interest;
+    }
+
+    {
+      const before = k401Bal;
+      k401Bal = k401Bal * (1 + monthlyRate(k401Rate));
+      const interest = k401Bal - before;
+      const k401Pay = isContributing ? (allocationMode.k401 === '%' ? income * k401Pct / 100 : +k401AmtEl.value / 12) : 0;
+      k401Bal += k401Pay;
+      yearContrib.k401 += k401Pay;
+      yearInterest.k401 += interest;
+      totalContrib.k401 += k401Pay;
+      totalInterest.k401 += interest;
+    }
+
+    {
+      const before = rothBal;
+      rothBal = rothBal * (1 + monthlyRate(rothRate));
+      const interest = rothBal - before;
+      const rothPay = isContributing ? (allocationMode.roth === '%' ? income * rothPct / 100 : +rothAmtEl.value / 12) : 0;
+      rothBal += rothPay;
+      yearContrib.roth += rothPay;
+      yearInterest.roth += interest;
+      totalContrib.roth += rothPay;
+      totalInterest.roth += interest;
+    }
+
+    {
+      const before = otherBal;
+      otherBal = otherBal * (1 + monthlyRate(otherRate));
+      const interest = otherBal - before;
+      otherBal += otherPay;
+      yearContrib.other += otherPay;
+      yearInterest.other += interest;
+      totalContrib.other += otherPay;
+      totalInterest.other += interest;
+    }
+
+    if (m % 12 === 0) {
+      rows.push({
+        year: m / 12,
+        mortgage: Math.max(0, mortBal),
+        bank: bankBal,
+        stock: stockBal,
+        k401: k401Bal,
+        roth: rothBal,
+        other: otherBal,
+        contrib: { ...yearContrib },
+        interest: { ...yearInterest }
+      });
+
+      yearContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0 };
+      yearInterest = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0 };
+      
+      // Apply inflation for next year
+      income *= (1 + incomeInflation);
+      monthlyBills *= (1 + billInflation);
+    }
+  }
+
+  payoffEl.textContent = payoffMonth
+    ? `Mortgage paid off in ${(payoffMonth / 12).toFixed(1)} years`
+    : 'Mortgage not paid off within 30 years (effectively infinite)';
+
+  document.getElementById('breakdownTitle').textContent = `${totalYears}-Year Yearly Breakdown`;
+
+  const finalYear = rows[rows.length - 1];
+  const finalNetWorth = finalYear.bank + finalYear.stock + finalYear.k401 + finalYear.roth + finalYear.other - finalYear.mortgage;
+  const totalDeposits = totalContrib.bank + totalContrib.stock + totalContrib.k401 + totalContrib.roth + totalContrib.other;
+  const totalGains = totalInterest.bank + totalInterest.stock + totalInterest.k401 + totalInterest.roth + totalInterest.other;
+  
+  // Calculate income and bills after inflation
+  let finalIncome = +incomeEl.value;
+  let finalBills = +billsEl.value;
+  for (let y = 0; y < totalYears - 1; y++) {
+    finalIncome *= (1 + incomeInflation);
+    finalBills *= (1 + billInflation);
+  }
+  const monthlySurplus = finalIncome - finalBills;
+  
+  netWorthEl.innerHTML = `
+    <div style="padding-top: 12px;">
+      <div><strong>Summary After ${totalYears} Years:</strong></div>
+      <div>Total Deposits (Bank + Stock + Other): $${formatCurrency(totalDeposits)}</div>
+      <div>Total Gains (Interest/Returns): $${formatCurrency(totalGains)}</div>
+      <div style="margin-top: 8px; font-size: 16px;"><strong>Final Net Worth: $${formatCurrency(finalNetWorth)}</strong></div>
+      <div style="margin-top: 8px; font-size: 14px; color: #666;">
+        Bank: $${formatCurrency(finalYear.bank)} | Stock: $${formatCurrency(finalYear.stock)} | 401K: $${formatCurrency(finalYear.k401)} | Roth: $${formatCurrency(finalYear.roth)} | Other: $${formatCurrency(finalYear.other)}
+      </div>
+      <div style="padding-top: 12px" />
+      <div style="margin-bottom: 12px 0; padding: 12px 0; border-top: 1px solid #e0e0e0;">
+        <div style="font-size: 13px; color: #666;">Monthly Income Projections (with ${+incomeInflationEl.value}% inflation):</div>
+        <div>Today: $${formatCurrency(+incomeEl.value)} | Year ${totalYears}: $${formatCurrency(finalIncome)}</div>
+        <div style="font-size: 13px; color: #666; margin-top: 4px;">Monthly Bills Projections (with ${+billInflationEl.value}% inflation):</div>
+        <div>Today: $${formatCurrency(+billsEl.value)} | Year ${totalYears}: $${formatCurrency(finalBills)}</div>
+      </div>
+    </div>
+  `;
+
+  tbody.innerHTML = rows.map(r => {
+    const total = r.bank + r.stock + r.k401 + r.roth + r.other - r.mortgage;
+    return `
+    <tr>
+      <td>${r.year}</td>
+      <td>$${formatCurrency(r.mortgage)}<br><small data-tooltip="Yearly payment: -$${formatCurrency(r.contrib.mortgage)} | Monthly avg: -$${formatCurrency(r.contrib.mortgage/12)}">-$${formatCurrency(r.contrib.mortgage)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.mortgage)} | Monthly avg: ${formatSignedCurrency(r.interest.mortgage/12)}">${formatSignedCurrencyHTML(r.interest.mortgage)}</small></td>
+      <td><small data-tooltip="Yearly bills: -$${formatCurrency(r.contrib.bills)} | Monthly avg: -$${formatCurrency(r.contrib.bills/12)}">${formatSignedCurrencyHTML(-r.contrib.bills)}</small></td>
+      <td>$${formatCurrency(r.bank)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.bank)} | Monthly avg: ${formatSignedCurrency(r.contrib.bank/12)}">${formatSignedCurrencyHTML(r.contrib.bank)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.bank)} | Monthly avg: ${formatSignedCurrency(r.interest.bank/12)}">${formatSignedCurrencyHTML(r.interest.bank)}</small></td>
+      <td>$${formatCurrency(r.stock)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.stock)} | Monthly avg: ${formatSignedCurrency(r.contrib.stock/12)}">${formatSignedCurrencyHTML(r.contrib.stock)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.stock)} | Monthly avg: ${formatSignedCurrency(r.interest.stock/12)}">${formatSignedCurrencyHTML(r.interest.stock)}</small></td>
+      <td>$${formatCurrency(r.k401)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.k401)} | Monthly avg: ${formatSignedCurrency(r.contrib.k401/12)}">${formatSignedCurrencyHTML(r.contrib.k401)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.k401)} | Monthly avg: ${formatSignedCurrency(r.interest.k401/12)}">${formatSignedCurrencyHTML(r.interest.k401)}</small></td>
+      <td>$${formatCurrency(r.roth)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.roth)} | Monthly avg: ${formatSignedCurrency(r.contrib.roth/12)}">${formatSignedCurrencyHTML(r.contrib.roth)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.roth)} | Monthly avg: ${formatSignedCurrency(r.interest.roth/12)}">${formatSignedCurrencyHTML(r.interest.roth)}</small></td>
+      <td>$${formatCurrency(r.other)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.other)} | Monthly avg: ${formatSignedCurrency(r.contrib.other/12)}">${formatSignedCurrencyHTML(r.contrib.other)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.other)} | Monthly avg: ${formatSignedCurrency(r.interest.other/12)}">${formatSignedCurrencyHTML(r.interest.other)}</small></td>
+      <td><strong>$${formatCurrency(total)}</strong></td>
+    </tr>`;
+  }).join('');
+}
+
+const incomeEl = document.getElementById('income');
+const totalYearsEl = document.getElementById('totalYears');
+const contributeYearsEl = document.getElementById('contributeYears');
+const billsEl = document.getElementById('bills');
+const billInflationEl = document.getElementById('billInflation');
+const incomeInflationEl = document.getElementById('incomeInflation');
+const mortInitialEl = document.getElementById('mortInitial');
+const bankInitialEl = document.getElementById('bankInitial');
+const stockInitialEl = document.getElementById('stockInitial');
+const k401InitialEl = document.getElementById('k401Initial');
+const rothInitialEl = document.getElementById('rothInitial');
+const otherInitialEl = document.getElementById('otherInitial');
+const mortPctEl = document.getElementById('mortPct');
+const mortAmtEl = document.getElementById('mortAmt');
+const mortRateEl = document.getElementById('mortRate');
+const bankPctEl = document.getElementById('bankPct');
+const bankAmtEl = document.getElementById('bankAmt');
+const bankRateEl = document.getElementById('bankRate');
+const stockPctEl = document.getElementById('stockPct');
+const stockAmtEl = document.getElementById('stockAmt');
+const stockRateEl = document.getElementById('stockRate');
+const k401PctEl = document.getElementById('k401Pct');
+const k401AmtEl = document.getElementById('k401Amt');
+const k401RateEl = document.getElementById('k401Rate');
+const rothPctEl = document.getElementById('rothPct');
+const rothAmtEl = document.getElementById('rothAmt');
+const rothRateEl = document.getElementById('rothRate');
+const otherPctEl = document.getElementById('otherPct');
+const otherAmtEl = document.getElementById('otherAmt');
+const otherRateEl = document.getElementById('otherRate');
+const payoffEl = document.getElementById('payoff');
+const netWorthEl = document.getElementById('netWorth');
+const tbody = document.querySelector('#results tbody');
+
+document.getElementById('runBtn').addEventListener('click', simulate);
+
+simulate();
+</script>
+
+</body>
+</html>
