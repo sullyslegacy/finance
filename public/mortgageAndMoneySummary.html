@@ -16,11 +16,15 @@
     .allocation-item { display: flex; flex-direction: column; justify-content: flex-start; }
     .allocation-item label { margin-bottom: 8px; }
     .allocation-item label:last-child { margin-bottom: 0; }
+    .employer-match { margin-top: 12px; padding-top: 12px; font-size: 13px; color: #555; }
+    .employer-match-label { display: block; font-weight: 500; margin-bottom: 6px; }
     .top-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 20px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 6px; text-align: right; }
+    thead { position: sticky; top: -.5px; z-index: 10; }
     th { background: #f5f5f5; }
     td:first-child, th:first-child { text-align: left; }
+    .hidden-col { display: none; }
     .note { margin-top: 10px; font-style: italic; }
     .negative { color: #d9534f; font-weight: bold; }
     [data-tooltip] { cursor: help; border-bottom: 1px dotted #666; position: relative; }
@@ -144,15 +148,23 @@
     <label>Current: $<input id="k401Initial" type="number" value="0" placeholder="Starting balance"></label>
   </div>
   <div class="allocation-item">
-    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('k401', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('k401', 'amt')">Amt</button></div><input id="k401Pct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="k401Amt" type="number" value="5000" placeholder="Annual">
-      <div style="margin-top:8px; font-size:13px;">Employer Match
-        <div class="toggle-group" style="margin-top:4px;"><button class="toggle-btn active" onclick="toggleMode('k401Match', '%')">%</button><button class="toggle-btn" onclick="toggleMode('k401Match', 'amt')">Amt</button></div>
-        <input id="k401MatchPct" type="number" value="50" placeholder="% of employee contribution"><input id="k401MatchAmt" type="number" value="0" style="display:none; margin-left:8px;" placeholder="Annual">
-      </div>
-    </label>
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('k401', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('k401', 'amt')">Amt</button></div><input id="k401Pct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="k401Amt" type="number" value="5000" placeholder="Annual"></label>
   </div>
   <div class="allocation-item">
     <label>Rate %<input id="k401Rate" type="number" value="7.5"></label>
+  </div>
+  <div class="allocation-item">
+    <div class="employer-match">
+      <span class="employer-match-label">Yearly Bump Up</span>
+      <input id="k401BumpUp" type="number" value="0" placeholder="Annual increase amount">
+    </div>
+  </div>
+  <div class="allocation-item">
+    <div class="employer-match">
+      <span class="employer-match-label">Employer Match</span>
+      <div class="toggle-group"><button class="toggle-btn active" onclick="toggleMode('k401Match', '%')">%</button><button class="toggle-btn" onclick="toggleMode('k401Match', 'amt')">Amt</button></div>
+      <input id="k401MatchPct" type="number" value="4" placeholder="% of employee contribution"><input id="k401MatchAmt" type="number" value="0" style="display:none;" placeholder="Annual">
+    </div>
   </div>
 </div>
 
@@ -263,6 +275,7 @@ function saveInputsToLocalStorage() {
     k401Amt: k401AmtEl.value,
     k401MatchPct: k401MatchPctEl.value,
     k401MatchAmt: k401MatchAmtEl.value,
+    k401BumpUp: k401BumpUpEl.value,
     k401Rate: k401RateEl.value,
     rothInitial: rothInitialEl.value,
     rothPct: rothPctEl.value,
@@ -310,6 +323,7 @@ function loadInputsFromLocalStorage() {
     k401AmtEl.value = inputs.k401Amt || k401AmtEl.value;
     k401MatchPctEl.value = inputs.k401MatchPct || k401MatchPctEl.value;
     k401MatchAmtEl.value = inputs.k401MatchAmt || k401MatchAmtEl.value;
+    k401BumpUpEl.value = inputs.k401BumpUp || k401BumpUpEl.value;
     k401RateEl.value = inputs.k401Rate || k401RateEl.value;
     rothInitialEl.value = inputs.rothInitial || rothInitialEl.value;
     rothPctEl.value = inputs.rothPct || rothPctEl.value;
@@ -416,8 +430,9 @@ function resetToDefaults() {
   k401InitialEl.value = '0';
   k401PctEl.value = '0';
   k401AmtEl.value = '5000';
-  k401MatchPctEl.value = '50';
+  k401MatchPctEl.value = '4';
   k401MatchAmtEl.value = '0';
+  k401BumpUpEl.value = '0';
   k401RateEl.value = '7.5';
   rothInitialEl.value = '0';
   rothPctEl.value = '0';
@@ -477,6 +492,7 @@ function simulate() {
   let k401Bal = +k401InitialEl.value;
   const k401MatchPct = +k401MatchPctEl.value;
   const k401MatchAmt = +k401MatchAmtEl.value;
+  const k401BumpUp = +k401BumpUpEl.value;
 
   const rothPct = +rothPctEl.value;
   const rothRate = +rothRateEl.value;
@@ -488,6 +504,14 @@ function simulate() {
   const iraPct = +iraPctEl.value;
   const iraRate = +iraRateEl.value;
   let iraBal = +iraInitialEl.value;
+
+  // Determine which columns to hide
+  const hiddenColumns = new Set();
+  if (+stockInitialEl.value === 0 && +stockPctEl.value === 0 && +stockAmtEl.value === 0) hiddenColumns.add('stock');
+  if (+k401InitialEl.value === 0 && +k401PctEl.value === 0 && +k401AmtEl.value === 0 && +k401MatchPctEl.value === 0 && +k401MatchAmtEl.value === 0) hiddenColumns.add('k401');
+  if (+rothInitialEl.value === 0 && +rothPctEl.value === 0 && +rothAmtEl.value === 0) hiddenColumns.add('roth');
+  if (+iraInitialEl.value === 0 && +iraPctEl.value === 0 && +iraAmtEl.value === 0) hiddenColumns.add('ira');
+  if (+otherInitialEl.value === 0 && +otherPctEl.value === 0 && +otherAmtEl.value === 0) hiddenColumns.add('other');
 
   // Validate that percentage allocations do not exceed 100%
   const totalPct = mortPct + bankPct + stockPct + k401Pct + rothPct + iraPct + otherPct;
@@ -562,8 +586,8 @@ function simulate() {
       k401Bal = k401Bal * (1 + monthlyRate(k401Rate));
       const interest = k401Bal - before;
       const k401Pay = isContributing ? (allocationMode.k401 === '%' ? income * k401Pct / 100 : +k401AmtEl.value / 12) : 0;
-      // Employer match: if match mode is '%', interpret as percent of employee contribution; otherwise fixed annual amount
-      const employerMatch = isContributing ? (allocationMode.k401Match === '%' ? k401Pay * (k401MatchPct / 100) : (k401MatchAmt / 12)) : 0;
+      // Employer match: if match mode is '%', interpret as percent of monthly income; otherwise fixed annual amount
+      const employerMatch = isContributing ? (allocationMode.k401Match === '%' ? income * (k401MatchPct / 100) : (k401MatchAmt / 12)) : 0;
       k401Bal += k401Pay + employerMatch;
       yearContrib.k401 += k401Pay + employerMatch;
       yearInterest.k401 += interest;
@@ -628,6 +652,11 @@ function simulate() {
       income *= (1 + incomeInflation);
       monthlyBills *= (1 + billInflation);
       yearlyTaxes *= (1 + taxInflation);
+      
+      // Apply yearly bump up to 401K contribution if still contributing
+      if (m / 12 < +contributeYearsEl.value) {
+        k401AmtEl.value = (+k401AmtEl.value + k401BumpUp).toString();
+      }
     }
   }
 
@@ -636,6 +665,18 @@ function simulate() {
     : 'Mortgage not paid off within 30 years (effectively infinite)';
 
   document.getElementById('breakdownTitle').textContent = `${totalYears}-Year Yearly Breakdown`;
+
+  // Hide/show columns based on hiddenColumns set
+  const headerCells = document.querySelectorAll('#results thead th');
+  const columnMap = ['year', 'income', 'bills', 'taxes', 'mortgage', 'bank', 'stock', 'k401', 'roth', 'ira', 'other', 'total'];
+  headerCells.forEach((cell, index) => {
+    const columnName = columnMap[index];
+    if (hiddenColumns.has(columnName)) {
+      cell.classList.add('hidden-col');
+    } else {
+      cell.classList.remove('hidden-col');
+    }
+  });
 
   const finalYear = rows[rows.length - 1];
   const finalNetWorth = finalYear.bank + finalYear.stock + finalYear.k401 + finalYear.roth + finalYear.ira + finalYear.other - finalYear.mortgage;
@@ -686,11 +727,11 @@ function simulate() {
       <td><small data-tooltip="Yearly taxes: -$${formatCurrency(r.contrib.taxes)} | Monthly avg: -$${formatCurrency(r.contrib.taxes/12)}">${formatSignedCurrencyHTML(-r.contrib.taxes)}</small></td>
       <td>$${formatCurrency(r.mortgage)}<br><small data-tooltip="Yearly payment: -$${formatCurrency(r.contrib.mortgage)} | Monthly avg: -$${formatCurrency(r.contrib.mortgage/12)}">-$${formatCurrency(r.contrib.mortgage)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.mortgage)} | Monthly avg: ${formatSignedCurrency(r.interest.mortgage/12)}">${formatSignedCurrencyHTML(r.interest.mortgage)}</small></td>
       <td>$${formatCurrency(r.bank)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.bank)} | Monthly avg: ${formatSignedCurrency(r.contrib.bank/12)}">${formatSignedCurrencyHTML(r.contrib.bank)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.bank)} | Monthly avg: ${formatSignedCurrency(r.interest.bank/12)}">${formatSignedCurrencyHTML(r.interest.bank)}</small></td>
-      <td>$${formatCurrency(r.stock)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.stock)} | Monthly avg: ${formatSignedCurrency(r.contrib.stock/12)}">${formatSignedCurrencyHTML(r.contrib.stock)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.stock)} | Monthly avg: ${formatSignedCurrency(r.interest.stock/12)}">${formatSignedCurrencyHTML(r.interest.stock)}</small></td>
-      <td>$${formatCurrency(r.k401)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.k401)} | Monthly avg: ${formatSignedCurrency(r.contrib.k401/12)}">${formatSignedCurrencyHTML(r.contrib.k401)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.k401)} | Monthly avg: ${formatSignedCurrency(r.interest.k401/12)}">${formatSignedCurrencyHTML(r.interest.k401)}</small></td>
-      <td>$${formatCurrency(r.roth)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.roth)} | Monthly avg: ${formatSignedCurrency(r.contrib.roth/12)}">${formatSignedCurrencyHTML(r.contrib.roth)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.roth)} | Monthly avg: ${formatSignedCurrency(r.interest.roth/12)}">${formatSignedCurrencyHTML(r.interest.roth)}</small></td>
-      <td>$${formatCurrency(r.ira)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.ira)} | Monthly avg: ${formatSignedCurrency(r.contrib.ira/12)}">${formatSignedCurrencyHTML(r.contrib.ira)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.ira)} | Monthly avg: ${formatSignedCurrency(r.interest.ira/12)}">${formatSignedCurrencyHTML(r.interest.ira)}</small></td>
-      <td>$${formatCurrency(r.other)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.other)} | Monthly avg: ${formatSignedCurrency(r.contrib.other/12)}">${formatSignedCurrencyHTML(r.contrib.other)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.other)} | Monthly avg: ${formatSignedCurrency(r.interest.other/12)}">${formatSignedCurrencyHTML(r.interest.other)}</small></td>
+      <td${hiddenColumns.has('stock') ? ' class="hidden-col"' : ''}>$${formatCurrency(r.stock)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.stock)} | Monthly avg: ${formatSignedCurrency(r.contrib.stock/12)}">${formatSignedCurrencyHTML(r.contrib.stock)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.stock)} | Monthly avg: ${formatSignedCurrency(r.interest.stock/12)}">${formatSignedCurrencyHTML(r.interest.stock)}</small></td>
+      <td${hiddenColumns.has('k401') ? ' class="hidden-col"' : ''}>$${formatCurrency(r.k401)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.k401)} | Monthly avg: ${formatSignedCurrency(r.contrib.k401/12)}">${formatSignedCurrencyHTML(r.contrib.k401)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.k401)} | Monthly avg: ${formatSignedCurrency(r.interest.k401/12)}">${formatSignedCurrencyHTML(r.interest.k401)}</small></td>
+      <td${hiddenColumns.has('roth') ? ' class="hidden-col"' : ''}>$${formatCurrency(r.roth)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.roth)} | Monthly avg: ${formatSignedCurrency(r.contrib.roth/12)}">${formatSignedCurrencyHTML(r.contrib.roth)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.roth)} | Monthly avg: ${formatSignedCurrency(r.interest.roth/12)}">${formatSignedCurrencyHTML(r.interest.roth)}</small></td>
+      <td${hiddenColumns.has('ira') ? ' class="hidden-col"' : ''}>$${formatCurrency(r.ira)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.ira)} | Monthly avg: ${formatSignedCurrency(r.contrib.ira/12)}">${formatSignedCurrencyHTML(r.contrib.ira)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.ira)} | Monthly avg: ${formatSignedCurrency(r.interest.ira/12)}">${formatSignedCurrencyHTML(r.interest.ira)}</small></td>
+      <td${hiddenColumns.has('other') ? ' class="hidden-col"' : ''}>$${formatCurrency(r.other)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.other)} | Monthly avg: ${formatSignedCurrency(r.contrib.other/12)}">${formatSignedCurrencyHTML(r.contrib.other)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.other)} | Monthly avg: ${formatSignedCurrency(r.interest.other/12)}">${formatSignedCurrencyHTML(r.interest.other)}</small></td>
       <td><strong>$${formatCurrency(total)}</strong></td>
     </tr>`;
   }).join('');
@@ -724,6 +765,7 @@ const k401AmtEl = document.getElementById('k401Amt');
 const k401RateEl = document.getElementById('k401Rate');
 const k401MatchPctEl = document.getElementById('k401MatchPct');
 const k401MatchAmtEl = document.getElementById('k401MatchAmt');
+const k401BumpUpEl = document.getElementById('k401BumpUp');
 const rothPctEl = document.getElementById('rothPct');
 const rothAmtEl = document.getElementById('rothAmt');
 const rothRateEl = document.getElementById('rothRate');
