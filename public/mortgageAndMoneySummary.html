@@ -62,8 +62,8 @@
   </label>
 
   <label>
-    Total Years
-    <input id="totalYears" type="number" value="30" />
+    Income Inflation %
+    <input id="incomeInflation" type="number" value="2" />
   </label>
 
   <label>
@@ -73,7 +73,7 @@
 
   <label>
     Monthly Bills
-    <input id="bills" type="number" value="3000" />
+    <input id="bills" type="number" value="2000" />
   </label>
 
   <label>
@@ -82,8 +82,18 @@
   </label>
 
   <label>
-    Income Inflation %
-    <input id="incomeInflation" type="number" value="2" />
+    Total Years
+    <input id="totalYears" type="number" value="30" />
+  </label>
+
+  <label>
+    Yearly Taxes
+    <input id="taxes" type="number" value="15000" />
+  </label>
+
+  <label>
+    Tax Inflation %
+    <input id="taxInflation" type="number" value="3" />
   </label>
 </div>
 
@@ -118,7 +128,7 @@
 <div class="allocation-group">
   <div class="allocation-item">
     <label><strong>Stock</strong></label>
-    <label>Current: $<input id="stockInitial" type="number" value="100000" placeholder="Starting balance"></label>
+    <label>Current: $<input id="stockInitial" type="number" value="0" placeholder="Starting balance"></label>
   </div>
   <div class="allocation-item">
     <label>Contribution<div class="toggle-group"><button class="toggle-btn active" onclick="toggleMode('stock', '%')">%</button><button class="toggle-btn" onclick="toggleMode('stock', 'amt')">Amt</button></div><input id="stockPct" type="number" value="30" placeholder="% of income"><input id="stockAmt" type="number" value="36000" style="display:none;" placeholder="Annual"></label>
@@ -134,7 +144,7 @@
     <label>Current: $<input id="k401Initial" type="number" value="0" placeholder="Starting balance"></label>
   </div>
   <div class="allocation-item">
-    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('k401', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('k401', 'amt')">Amt</button></div><input id="k401Pct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="k401Amt" type="number" value="23500" placeholder="Annual"></label>
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('k401', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('k401', 'amt')">Amt</button></div><input id="k401Pct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="k401Amt" type="number" value="5000" placeholder="Annual"></label>
   </div>
   <div class="allocation-item">
     <label>Rate %<input id="k401Rate" type="number" value="7.5"></label>
@@ -147,7 +157,7 @@
     <label>Current: $<input id="rothInitial" type="number" value="0" placeholder="Starting balance"></label>
   </div>
   <div class="allocation-item">
-    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('roth', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('roth', 'amt')">Amt</button></div><input id="rothPct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="rothAmt" type="number" value="7000" placeholder="Annual"></label>
+    <label>Contribution<div class="toggle-group"><button class="toggle-btn" onclick="toggleMode('roth', '%')">%</button><button class="toggle-btn active" onclick="toggleMode('roth', 'amt')">Amt</button></div><input id="rothPct" type="number" value="0" style="display:none;" placeholder="% of income"><input id="rothAmt" type="number" value="1000" placeholder="Annual"></label>
   </div>
   <div class="allocation-item">
     <label>Rate %<input id="rothRate" type="number" value="7.5"></label>
@@ -163,11 +173,12 @@
     <label>Contribution<div class="toggle-group"><button class="toggle-btn active" onclick="toggleMode('other', '%')">%</button><button class="toggle-btn" onclick="toggleMode('other', 'amt')">Amt</button></div><input id="otherPct" type="number" value="0" placeholder="% of income"><input id="otherAmt" type="number" value="0" style="display:none;" placeholder="Annual"></label>
   </div>
   <div class="allocation-item">
-    <label>Rate %<input id="otherRate" type="number" value="5"></label>
+    <label>Rate %<input id="otherRate" type="number" value="3.5"></label>
   </div>
 </div>
 
 <button id="runBtn" style="margin-top:20px;padding:10px 16px;font-size:16px;cursor:pointer;">Run Simulation</button>
+<button id="resetBtn" style="margin-top:20px;margin-left:10px;padding:10px 16px;font-size:16px;cursor:pointer;">Reset to Defaults</button>
 
 <h2>Mortgage Payoff</h2>
 <p id="payoff"></p>
@@ -177,8 +188,10 @@
   <thead>
     <tr>
       <th>Year</th>
-      <th>Mortgage Balance</th>
+      <th>Income</th>
       <th>Bills</th>
+      <th>Taxes</th>
+      <th>Mortgage Balance</th>
       <th>Bank</th>
       <th>Stock</th>
       <th>401K</th>
@@ -201,6 +214,87 @@ const allocationMode = {
   roth: 'amt',
   other: '%'
 };
+
+function saveInputsToLocalStorage() {
+  const inputs = {
+    income: incomeEl.value,
+    totalYears: totalYearsEl.value,
+    contributeYears: contributeYearsEl.value,
+    bills: billsEl.value,
+    billInflation: billInflationEl.value,
+    incomeInflation: incomeInflationEl.value,
+    taxes: taxesEl.value,
+    taxInflation: taxInflationEl.value,
+    mortInitial: mortInitialEl.value,
+    mortPct: mortPctEl.value,
+    mortAmt: mortAmtEl.value,
+    mortRate: mortRateEl.value,
+    bankInitial: bankInitialEl.value,
+    bankPct: bankPctEl.value,
+    bankAmt: bankAmtEl.value,
+    bankRate: bankRateEl.value,
+    stockInitial: stockInitialEl.value,
+    stockPct: stockPctEl.value,
+    stockAmt: stockAmtEl.value,
+    stockRate: stockRateEl.value,
+    k401Initial: k401InitialEl.value,
+    k401Pct: k401PctEl.value,
+    k401Amt: k401AmtEl.value,
+    k401Rate: k401RateEl.value,
+    rothInitial: rothInitialEl.value,
+    rothPct: rothPctEl.value,
+    rothAmt: rothAmtEl.value,
+    rothRate: rothRateEl.value,
+    otherInitial: otherInitialEl.value,
+    otherPct: otherPctEl.value,
+    otherAmt: otherAmtEl.value,
+    otherRate: otherRateEl.value,
+    allocationMode: allocationMode
+  };
+  localStorage.setItem('simulatorInputs', JSON.stringify(inputs));
+}
+
+function loadInputsFromLocalStorage() {
+  const saved = localStorage.getItem('simulatorInputs');
+  if (saved) {
+    const inputs = JSON.parse(saved);
+    incomeEl.value = inputs.income || incomeEl.value;
+    totalYearsEl.value = inputs.totalYears || totalYearsEl.value;
+    contributeYearsEl.value = inputs.contributeYears || contributeYearsEl.value;
+    billsEl.value = inputs.bills || billsEl.value;
+    billInflationEl.value = inputs.billInflation || billInflationEl.value;
+    incomeInflationEl.value = inputs.incomeInflation || incomeInflationEl.value;
+    taxesEl.value = inputs.taxes || taxesEl.value;
+    taxInflationEl.value = inputs.taxInflation || taxInflationEl.value;
+    mortInitialEl.value = inputs.mortInitial || mortInitialEl.value;
+    mortPctEl.value = inputs.mortPct || mortPctEl.value;
+    mortAmtEl.value = inputs.mortAmt || mortAmtEl.value;
+    mortRateEl.value = inputs.mortRate || mortRateEl.value;
+    bankInitialEl.value = inputs.bankInitial || bankInitialEl.value;
+    bankPctEl.value = inputs.bankPct || bankPctEl.value;
+    bankAmtEl.value = inputs.bankAmt || bankAmtEl.value;
+    bankRateEl.value = inputs.bankRate || bankRateEl.value;
+    stockInitialEl.value = inputs.stockInitial || stockInitialEl.value;
+    stockPctEl.value = inputs.stockPct || stockPctEl.value;
+    stockAmtEl.value = inputs.stockAmt || stockAmtEl.value;
+    stockRateEl.value = inputs.stockRate || stockRateEl.value;
+    k401InitialEl.value = inputs.k401Initial || k401InitialEl.value;
+    k401PctEl.value = inputs.k401Pct || k401PctEl.value;
+    k401AmtEl.value = inputs.k401Amt || k401AmtEl.value;
+    k401RateEl.value = inputs.k401Rate || k401RateEl.value;
+    rothInitialEl.value = inputs.rothInitial || rothInitialEl.value;
+    rothPctEl.value = inputs.rothPct || rothPctEl.value;
+    rothAmtEl.value = inputs.rothAmt || rothAmtEl.value;
+    rothRateEl.value = inputs.rothRate || rothRateEl.value;
+    otherInitialEl.value = inputs.otherInitial || otherInitialEl.value;
+    otherPctEl.value = inputs.otherPct || otherPctEl.value;
+    otherAmtEl.value = inputs.otherAmt || otherAmtEl.value;
+    otherRateEl.value = inputs.otherRate || otherRateEl.value;
+    if (inputs.allocationMode) {
+      Object.assign(allocationMode, inputs.allocationMode);
+    }
+  }
+}
 
 function toggleMode(category, mode) {
   allocationMode[category] = mode;
@@ -243,14 +337,64 @@ function monthlyRate(rate) {
   return rate / 100 / 12;
 }
 
+function resetToDefaults() {
+  incomeEl.value = '10000';
+  totalYearsEl.value = '30';
+  contributeYearsEl.value = '20';
+  billsEl.value = '3000';
+  billInflationEl.value = '3';
+  incomeInflationEl.value = '2';
+  taxesEl.value = '3000';
+  taxInflationEl.value = '2';
+  mortInitialEl.value = '500000';
+  mortPctEl.value = '40';
+  mortAmtEl.value = '60000';
+  mortRateEl.value = '6.5';
+  bankInitialEl.value = '100000';
+  bankPctEl.value = '30';
+  bankAmtEl.value = '36000';
+  bankRateEl.value = '3.5';
+  stockInitialEl.value = '0';
+  stockPctEl.value = '30';
+  stockAmtEl.value = '36000';
+  stockRateEl.value = '8.5';
+  k401InitialEl.value = '0';
+  k401PctEl.value = '0';
+  k401AmtEl.value = '5000';
+  k401RateEl.value = '7.5';
+  rothInitialEl.value = '0';
+  rothPctEl.value = '0';
+  rothAmtEl.value = '1000';
+  rothRateEl.value = '7.5';
+  otherInitialEl.value = '0';
+  otherPctEl.value = '0';
+  otherAmtEl.value = '0';
+  otherRateEl.value = '3.5';
+  
+  allocationMode.mort = '%';
+  allocationMode.bank = '%';
+  allocationMode.stock = '%';
+  allocationMode.k401 = 'amt';
+  allocationMode.roth = 'amt';
+  allocationMode.other = '%';
+  
+  saveInputsToLocalStorage();
+  simulate();
+}
+
 function simulate() {
+  // Save inputs to localStorage
+  saveInputsToLocalStorage();
+  
   const totalYears = +totalYearsEl.value;
   const MONTHS = totalYears * 12;
   const contributeMonths = +contributeYearsEl.value * 12;
   let income = +incomeEl.value;
   let monthlyBills = +billsEl.value;
+  let yearlyTaxes = +taxesEl.value;
   const billInflation = +billInflationEl.value / 100;
   const incomeInflation = +incomeInflationEl.value / 100;
+  const taxInflation = +taxInflationEl.value / 100;
 
   let mortPct = +mortPctEl.value;
   const mortRate = +mortRateEl.value;
@@ -279,10 +423,10 @@ function simulate() {
   let payoffMonth = null;
   const rows = [];
 
-  let yearContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0 };
+  let yearContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0, taxes: 0 };
   let yearInterest = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0 };
 
-  let totalContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0 };
+  let totalContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0, taxes: 0 };
   let totalInterest = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0 };
 
   for (let m = 1; m <= MONTHS; m++) {
@@ -316,11 +460,14 @@ function simulate() {
       const interest = bankBal - before;
       bankBal += bankPay;
       bankBal -= monthlyBills;
+      bankBal -= yearlyTaxes / 12;
       yearContrib.bank += bankPay;
       yearContrib.bills += monthlyBills;
+      yearContrib.taxes += yearlyTaxes / 12;
       yearInterest.bank += interest;
       totalContrib.bank += bankPay;
       totalContrib.bills += monthlyBills;
+      totalContrib.taxes += yearlyTaxes / 12;
       totalInterest.bank += interest;
     }
 
@@ -373,6 +520,7 @@ function simulate() {
     if (m % 12 === 0) {
       rows.push({
         year: m / 12,
+        income: income,
         mortgage: Math.max(0, mortBal),
         bank: bankBal,
         stock: stockBal,
@@ -383,12 +531,13 @@ function simulate() {
         interest: { ...yearInterest }
       });
 
-      yearContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0 };
+      yearContrib = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0, bills: 0, taxes: 0 };
       yearInterest = { mortgage: 0, bank: 0, stock: 0, k401: 0, roth: 0, other: 0 };
       
       // Apply inflation for next year
       income *= (1 + incomeInflation);
       monthlyBills *= (1 + billInflation);
+      yearlyTaxes *= (1 + taxInflation);
     }
   }
 
@@ -402,13 +551,17 @@ function simulate() {
   const finalNetWorth = finalYear.bank + finalYear.stock + finalYear.k401 + finalYear.roth + finalYear.other - finalYear.mortgage;
   const totalDeposits = totalContrib.bank + totalContrib.stock + totalContrib.k401 + totalContrib.roth + totalContrib.other;
   const totalGains = totalInterest.bank + totalInterest.stock + totalInterest.k401 + totalInterest.roth + totalInterest.other;
+  const totalBills = totalContrib.bills;
+  const totalTaxes = totalContrib.taxes;
   
   // Calculate income and bills after inflation
   let finalIncome = +incomeEl.value;
   let finalBills = +billsEl.value;
+  let finalTaxes = +taxesEl.value;
   for (let y = 0; y < totalYears - 1; y++) {
     finalIncome *= (1 + incomeInflation);
     finalBills *= (1 + billInflation);
+    finalTaxes *= (1 + taxInflation);
   }
   const monthlySurplus = finalIncome - finalBills;
   
@@ -427,6 +580,8 @@ function simulate() {
         <div>Today: $${formatCurrency(+incomeEl.value)} | Year ${totalYears}: $${formatCurrency(finalIncome)}</div>
         <div style="font-size: 13px; color: #666; margin-top: 4px;">Monthly Bills Projections (with ${+billInflationEl.value}% inflation):</div>
         <div>Today: $${formatCurrency(+billsEl.value)} | Year ${totalYears}: $${formatCurrency(finalBills)}</div>
+        <div style="font-size: 13px; color: #666; margin-top: 4px;">Total Taxes Paid Over ${totalYears} Years (with ${+taxInflationEl.value}% inflation):</div>
+        <div>$${formatCurrency(totalTaxes)}</div>
       </div>
     </div>
   `;
@@ -436,8 +591,10 @@ function simulate() {
     return `
     <tr>
       <td>${r.year}</td>
-      <td>$${formatCurrency(r.mortgage)}<br><small data-tooltip="Yearly payment: -$${formatCurrency(r.contrib.mortgage)} | Monthly avg: -$${formatCurrency(r.contrib.mortgage/12)}">-$${formatCurrency(r.contrib.mortgage)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.mortgage)} | Monthly avg: ${formatSignedCurrency(r.interest.mortgage/12)}">${formatSignedCurrencyHTML(r.interest.mortgage)}</small></td>
+      <td>$${formatCurrency(r.income * 12)}<br><small data-tooltip="Monthly: $${formatCurrency(r.income)}">$${formatCurrency(r.income)}/mo</small></td>
       <td><small data-tooltip="Yearly bills: -$${formatCurrency(r.contrib.bills)} | Monthly avg: -$${formatCurrency(r.contrib.bills/12)}">${formatSignedCurrencyHTML(-r.contrib.bills)}</small></td>
+      <td><small data-tooltip="Yearly taxes: -$${formatCurrency(r.contrib.taxes)} | Monthly avg: -$${formatCurrency(r.contrib.taxes/12)}">${formatSignedCurrencyHTML(-r.contrib.taxes)}</small></td>
+      <td>$${formatCurrency(r.mortgage)}<br><small data-tooltip="Yearly payment: -$${formatCurrency(r.contrib.mortgage)} | Monthly avg: -$${formatCurrency(r.contrib.mortgage/12)}">-$${formatCurrency(r.contrib.mortgage)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.mortgage)} | Monthly avg: ${formatSignedCurrency(r.interest.mortgage/12)}">${formatSignedCurrencyHTML(r.interest.mortgage)}</small></td>
       <td>$${formatCurrency(r.bank)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.bank)} | Monthly avg: ${formatSignedCurrency(r.contrib.bank/12)}">${formatSignedCurrencyHTML(r.contrib.bank)}</small> / <small data-tooltip="Yearly interest: ${formatSignedCurrency(r.interest.bank)} | Monthly avg: ${formatSignedCurrency(r.interest.bank/12)}">${formatSignedCurrencyHTML(r.interest.bank)}</small></td>
       <td>$${formatCurrency(r.stock)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.stock)} | Monthly avg: ${formatSignedCurrency(r.contrib.stock/12)}">${formatSignedCurrencyHTML(r.contrib.stock)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.stock)} | Monthly avg: ${formatSignedCurrency(r.interest.stock/12)}">${formatSignedCurrencyHTML(r.interest.stock)}</small></td>
       <td>$${formatCurrency(r.k401)}<br><small data-tooltip="Yearly deposit: ${formatSignedCurrency(r.contrib.k401)} | Monthly avg: ${formatSignedCurrency(r.contrib.k401/12)}">${formatSignedCurrencyHTML(r.contrib.k401)}</small> / <small data-tooltip="Yearly gains: ${formatSignedCurrency(r.interest.k401)} | Monthly avg: ${formatSignedCurrency(r.interest.k401/12)}">${formatSignedCurrencyHTML(r.interest.k401)}</small></td>
@@ -454,6 +611,8 @@ const contributeYearsEl = document.getElementById('contributeYears');
 const billsEl = document.getElementById('bills');
 const billInflationEl = document.getElementById('billInflation');
 const incomeInflationEl = document.getElementById('incomeInflation');
+const taxesEl = document.getElementById('taxes');
+const taxInflationEl = document.getElementById('taxInflation');
 const mortInitialEl = document.getElementById('mortInitial');
 const bankInitialEl = document.getElementById('bankInitial');
 const stockInitialEl = document.getElementById('stockInitial');
@@ -483,7 +642,9 @@ const netWorthEl = document.getElementById('netWorth');
 const tbody = document.querySelector('#results tbody');
 
 document.getElementById('runBtn').addEventListener('click', simulate);
+document.getElementById('resetBtn').addEventListener('click', resetToDefaults);
 
+loadInputsFromLocalStorage();
 simulate();
 </script>
 
